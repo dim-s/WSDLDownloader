@@ -12,6 +12,12 @@ Usage:
 
 > cd project folder
 
-> mvn  exec:java -Dexec.args=&lt;<i>wsdl url</i>&gt;
+> mvn package
 
 </pre>
+
+Download your wsdl files via the build jar:
+
+`java -jar WSDLdownloader-1.0-SNAPSHOT.jar <wsdl_url>`
+
+After see your wsdl and xsd files in `dist/` directory.
