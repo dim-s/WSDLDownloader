@@ -220,7 +220,7 @@ public class WSDLDownloader {
             }
         }
 
-        final NodeList xsInclude = doc.getElementsByTagName("xs:include");
+        final NodeList xsInclude = doc.getElementsByTagName("xsd:include");
 
         for (int i = 0; i < xsInclude.getLength(); ++i) {
 
