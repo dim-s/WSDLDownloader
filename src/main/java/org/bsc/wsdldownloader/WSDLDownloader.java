@@ -4,8 +4,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -36,14 +39,30 @@ public class WSDLDownloader {
     static Set<URL> alreadyParsed = new HashSet<URL>();
 
     private static Document parse(URL url) throws ParserConfigurationException, IOException, SAXException {
-
-        if (url == null) throw new IllegalArgumentException("url is null!");
+        if (url == null) {
+            throw new IllegalArgumentException("url is null!");
+        }
 
         DocumentBuilder db = dbf.newDocumentBuilder();
 
         System.out.printf("download url [%s]\n", url);
 
-        InputStream is = url.openStream();
+        HttpURLConnection.setFollowRedirects(true);
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        urlConnection.setInstanceFollowRedirects(true);
+        urlConnection.connect();
+
+        switch (urlConnection.getResponseCode())
+        {
+            case HttpURLConnection.HTTP_MOVED_PERM:
+            case HttpURLConnection.HTTP_MOVED_TEMP:
+                String location = urlConnection.getHeaderField("Location");
+                location = URLDecoder.decode(location, "UTF-8");
+                urlConnection.disconnect();
+                return parse(new URL(location));
+        }
+
+        InputStream is = urlConnection.getInputStream();
 
         String file = url.getFile();
 
