@@ -58,6 +58,9 @@ public class WSDLDownloader {
             case HttpURLConnection.HTTP_MOVED_TEMP:
                 String location = urlConnection.getHeaderField("Location");
                 location = URLDecoder.decode(location, "UTF-8");
+
+                System.out.printf("redirect to url [%s]\n", location);
+
                 urlConnection.disconnect();
                 return parse(new URL(location));
         }
@@ -133,7 +136,7 @@ public class WSDLDownloader {
     }
 
     public static void writeXmlFile(Document doc, String filename) throws TransformerConfigurationException, TransformerException {
-        File file = new File("dist/", filename);
+        File file = new File("downloaded-wsdl/", filename);
         file.getParentFile().mkdirs();
 
         if (file.exists()) {
@@ -239,7 +242,7 @@ public class WSDLDownloader {
             }
         }
 
-        final NodeList xsInclude = doc.getElementsByTagName("xsd:include");
+        final NodeList xsInclude = doc.getElementsByTagName("xs:include");
 
         for (int i = 0; i < xsInclude.getLength(); ++i) {
 
@@ -247,7 +250,7 @@ public class WSDLDownloader {
 
             String location = e.getAttribute("schemaLocation");
 
-            System.out.printf("xsd:include location=[%s]\n", location);
+            System.out.printf("xs:include location=[%s]\n", location);
 
             java.net.URI uri = resolveURI(url, location);
             if (uri != null) {
@@ -256,6 +259,26 @@ public class WSDLDownloader {
 
                 String newLocation = parseLocationURL(locationURL);
 
+                e.setAttribute("schemaLocation", newLocation);
+
+                downloadAndParse(locationURL);
+            }
+        }
+
+        final NodeList xsdInclude = doc.getElementsByTagName("xsd:include");
+
+        for (int i = 0; i < xsdInclude.getLength(); ++i) {
+            Element e = (Element) xsdInclude.item(i);
+
+            String location = e.getAttribute("schemaLocation");
+
+            System.out.printf("xsd:include location=[%s]\n", location);
+
+            java.net.URI uri = resolveURI(url, location);
+            if (uri != null) {
+                final URL locationURL = uri.toURL();
+
+                String newLocation = parseLocationURL(locationURL);
                 e.setAttribute("schemaLocation", newLocation);
 
                 downloadAndParse(locationURL);
@@ -313,10 +336,10 @@ public class WSDLDownloader {
 
     public static void main(String[] args) {
         if (args.length < 1) {
-
             System.out.println("usage:  java -jar <WSDLDownloader archive>.jar <WSDL URL>");
             System.exit(-1);
         }
+
         try {
             downloadAndParse(new URL(args[0]));
         } catch (Exception ex) {
